@@ -159,7 +159,7 @@ def plot_results(points, results, fig, ax, pause_len=1.5):
 
 #=============================================================================================
 
-def _ClosestPair(pts_sortX, pts_sortY, results):
+def _ClosestPair(pts_sortX, pts_sortY, results, level):
     ''' 
     Return values:
          (1) minimum distance among given points (infinity if <2 points)
@@ -175,8 +175,8 @@ def _ClosestPair(pts_sortX, pts_sortY, results):
     median, pts_sortX_L, pts_sortX_R, pts_sortY_L, pts_sortY_R \
         = split_medianX(pts_sortX, pts_sortY)
     
-    delta_L, closest_pair_L = _ClosestPair(pts_sortX_L, pts_sortY_L, results)
-    delta_R, closest_pair_R = _ClosestPair(pts_sortX_R, pts_sortY_R, results)
+    delta_L, closest_pair_L = _ClosestPair(pts_sortX_L, pts_sortY_L, results, level+1)
+    delta_R, closest_pair_R = _ClosestPair(pts_sortX_R, pts_sortY_R, results, level+1)
     
     # identify closest pair in left and right subsets
     if delta_L < delta_R:
@@ -198,7 +198,7 @@ def _ClosestPair(pts_sortX, pts_sortY, results):
         closest_pair = closest_pair_C
         delta = distance(closest_pair_C[0], closest_pair_C[1])
 
-    results.append({'median': median, 'left min x': pts_sortX_L[0][0],
+    results.append({'recursion level': level, 'median': median, 'left min x': pts_sortX_L[0][0],
         'left max x': pts_sortX_L[-1][0], 'left closest pair': closest_pair_L,
         'right min x': pts_sortX_R[0][0], 'right max x': pts_sortX_R[-1][0],
         'right closest pair': closest_pair_R, 'center closest pair': closest_pair_C})
@@ -213,7 +213,7 @@ def ClosestPair(points):
     pts_sortY = points[points[:,1].argsort()]
     
     results = []
-    closest_dist, closest_pair = _ClosestPair(pts_sortX, pts_sortY, results)
+    closest_dist, closest_pair = _ClosestPair(pts_sortX, pts_sortY, results, 1)
 
     return closest_dist, closest_pair, results
 
@@ -242,14 +242,11 @@ if __name__ == "__main__":
          [5.01008064516129, 1.4799783549783556],
          [0.282258064516129, 9.691558441558442]])
 
-    points2 = np.array([[0,1], [2,1], [4.5,1], [5.5,1], [8,1], [10,1]])
-
-    closest_dist, closest_pair, results = ClosestPair(points1)
-
-    fig = plt.figure(figsize=(10,10))
-    plt.ion()
-    ax = fig.add_subplot(111)
-    ax.set_xlim([-1, 11])
-    ax.set_ylim([-1, 11])
-    plot_results(points1, results, fig, ax)
+    points2 = np.array([[0,1], [2,1], [3,1], [5.5,1], [6,1], [7,1], [8,1], [10,1]])
+    # [0,1], [2,1],  [3,1], [5.5,1]   |   [6,1], [7,1],   [8,1], [10,1]
+    # [0,1], [2,1] | [3,1], [5.5,1]   |   [6,1], [7,1], | [8,1], [10,1]
+    # 
+    closest_dist, closest_pair, results = ClosestPair(points2)
+    print(results)
+    
 

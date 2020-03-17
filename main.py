@@ -67,6 +67,7 @@ def _find_closest_pair(points, fig, ax):
     print(points)
     points = _clean_pairs(points)
     closest_dist, closest_pair, results = cp.ClosestPair(points)
+    print(results)
     cp.plot_results(points, results, fig, ax)
 
 
