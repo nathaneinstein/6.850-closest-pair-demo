@@ -52,13 +52,13 @@ def _clean_pairs(points):
 	dup_Xs = {x:0 for x, count in Counter(list(points[:,0])).items() if count > 1}
 	for i, x in enumerate(points[:,0]):
 		if x in dup_Xs:
-			points[i,0] += 1e-16 * dup_Xs[x]
+			points[i,0] += 1e-9 * dup_Xs[x]
 			dup_Xs[x] += 1
 	
 	dup_Ys = {y:0 for y, count in Counter(list(points[:,1])).items() if count > 1}
 	for i, y in enumerate(points[:,1]):
 		if y in dup_Ys:
-			points[i,1] += 1e-16 * dup_Ys[y]
+			points[i,1] += 1e-9 * dup_Ys[y]
 			dup_Ys[y] += 1
 	
 	return points
@@ -67,7 +67,7 @@ def _find_closest_pair(points, fig, ax):
     print(points)
     points = _clean_pairs(points)
     closest_dist, closest_pair, results = cp.ClosestPair(points)
-    print(results)
+    #print(results)
     cp.plot_results(points, results, fig, ax)
 
 
