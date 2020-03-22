@@ -219,25 +219,25 @@ def ClosestPair(points):
 ##############################################
 
 if __name__ == "__main__":
-    def _clean_pairs(points):
-        from collections import Counter
+    # def _clean_pairs(points):
+    #     from collections import Counter
 
-        points = np.asarray([p for p in points if None not in p])
+    #     points = np.asarray([p for p in points if None not in p])
 
-        # prevent any duplicate x values with imperceptible jitter
-        dup_Xs = {x: 0 for x, count in Counter(list(points[:, 0])).items() if count > 1}
-        for i, x in enumerate(points[:, 0]):
-            if x in dup_Xs:
-                points[i, 0] += 1e-9 * dup_Xs[x]
-                dup_Xs[x] += 1
+    #     # prevent any duplicate x values with imperceptible jitter
+    #     dup_Xs = {x: 0 for x, count in Counter(list(points[:, 0])).items() if count > 1}
+    #     for i, x in enumerate(points[:, 0]):
+    #         if x in dup_Xs:
+    #             points[i, 0] += 1e-9 * dup_Xs[x]
+    #             dup_Xs[x] += 1
 
-        dup_Ys = {y: 0 for y, count in Counter(list(points[:, 1])).items() if count > 1}
-        for i, y in enumerate(points[:, 1]):
-            if y in dup_Ys:
-                points[i, 1] += 1e-9 * dup_Ys[y]
-                dup_Ys[y] += 1
+    #     dup_Ys = {y: 0 for y, count in Counter(list(points[:, 1])).items() if count > 1}
+    #     for i, y in enumerate(points[:, 1]):
+    #         if y in dup_Ys:
+    #             points[i, 1] += 1e-9 * dup_Ys[y]
+    #             dup_Ys[y] += 1
 
-        return points
+    #     return points
 
 
     points1 = np.array(
