@@ -4,7 +4,8 @@ from matplotlib import pyplot as plt
 
 
 def split_medianX(pts_sortX, pts_sortY):
-    ''' Splits the two arrays, one sorted by x-coords and one by y-coords, around the median x value
+    ''' Splits the two arrays, one sorted by x-coords and one by y-coords, 
+        around the median x value
     
         If len(pts_sortX) is even: 
             the average of the two center elements is returned as the median x, 
@@ -14,7 +15,10 @@ def split_medianX(pts_sortX, pts_sortY):
     '''
     n = len(pts_sortX)
     
-    medianX = (pts_sortX[n//2 - 1][0] + pts_sortX[n//2][0]) / 2. if n%2==0 else pts_sortX[n//2][0]
+    if n%2==0:
+        medianX = (pts_sortX[n//2 - 1][0] + pts_sortX[n//2][0]) / 2. 
+    else:
+        medianX = pts_sortX[n//2][0]
     pts_sortX_L = pts_sortX[:n//2] 
     pts_sortX_R = pts_sortX[n//2:]
     
@@ -33,13 +37,14 @@ def split_medianX(pts_sortX, pts_sortY):
 
 
 def distance(pt1, pt2): 
+    ''' Return the Euclidean distance between points pt1 and pt2 '''
     return math.sqrt(sum((pt2 - pt1)**2))
     
 
 def pairwise_search(pts):
-    ''' Brute-force O(n^2) closest-pair search among all points in the 
-        passed array. Returns the closest pair and their Euclidean 
-        distance.
+    ''' Performs a brute-force O(n^2) search for closest pair among
+        all points in the passed array. Returns the closest pair
+        and their Euclidean distance.
     '''
     min_dist = math.inf
     closest_pair = None
@@ -75,22 +80,25 @@ def pts_within_deltaX(pts_sortX, pts_sortY, delta, x):
     
     
 def closest_pair_instrip(pts_sortY_instrip, max_dist):
-    ''' Find the closest pair of points in pts_sortY_instrip that are
-        less than max_dist of each other. If no such pair exists, returns
-        None.
+    ''' Find the closest pair of points in pts_sortY_instrip -- the
+        subset of all points that fall within max_dist of the median line,
+        sorted by y coordinate --  that are < max_dist of each other. 
+        If no such pair exists, returns None.
     '''
     Ys = pts_sortY_instrip[:,1]
     closest_dist = max_dist
     closest_pair = None
 
-    # will run at most 6 times
+    # inner loop will run at most 5 times. This fact is key to demonstrating 
+    # the algorithm runs in O(nlogn) rather than O(n^2)
     for i in range(len(pts_sortY_instrip)):
         j = i+1
         while (j < len(pts_sortY_instrip)) and (Ys[j] - Ys[i] < closest_dist):
             d_ij = distance(pts_sortY_instrip[i], pts_sortY_instrip[j])
             if d_ij < closest_dist:
                 closest_dist = d_ij
-                closest_pair = np.array([pts_sortY_instrip[i], pts_sortY_instrip[j]])
+                closest_pair = np.array([pts_sortY_instrip[i], 
+                                         pts_sortY_instrip[j]])
             j += 1
 
     return closest_pair
@@ -148,15 +156,13 @@ def plot_results(points, results, fig, ax, pause_len=1):
     for pt in (closest_pair[1:]):
         pt.set_offset_position('data')
         x, y = pt.get_offsets()[0]
-        ax.scatter(x=x, y=y, facecolors='y', edgecolors="None", alpha=0.8, s=30)
-    #print(closest_pair[1].get_paths())
-    #print(closest_pair[2].get_paths())
+        ax.scatter(x=x, y=y, facecolors='y', edgecolors="k", s=30, linewidths=2)
     fig.canvas.draw()
     fig.canvas.flush_events()
 
     plt.show(block=True)
 
-#=============================================================================================
+#===============================================================================
 
 def _ClosestPair(pts_sortX, pts_sortY, results, level):
     ''' 
@@ -185,9 +191,6 @@ def _ClosestPair(pts_sortX, pts_sortY, results, level):
         delta = delta_R
         closest_pair = closest_pair_R
 
-    # merge left and right in order of y-coordinate
-    #points_sortY = merge_sortY(pts_sortY_L, pts_sortY_R)
-    
     # get all points within delta units of the median
     _, pts_sortY_instrip = pts_within_deltaX(pts_sortX, pts_sortY, delta, median)
     
@@ -197,15 +200,19 @@ def _ClosestPair(pts_sortX, pts_sortY, results, level):
         closest_pair = closest_pair_C
         delta = distance(closest_pair_C[0], closest_pair_C[1])
 
-    results.append({'recursion level': level, 'median': median, 'left min x': pts_sortX_L[0][0],
-        'left max x': pts_sortX_L[-1][0], 'left closest pair': closest_pair_L,
-        'right min x': pts_sortX_R[0][0], 'right max x': pts_sortX_R[-1][0],
-        'right closest pair': closest_pair_R, 'center closest pair': closest_pair_C})
+    results.append({'recursion level': level, 'median': median,
+        'L min x': pts_sortX_L[0][0], 'L max x': pts_sortX_L[-1][0], 
+        'L closest pair': closest_pair_L, 'R min x': pts_sortX_R[0][0], 
+        'R max x': pts_sortX_R[-1][0], 'R closest pair': closest_pair_R, 
+        'center closest pair': closest_pair_C})
 
     return delta, closest_pair
     
     
 def ClosestPair(points):
+    ''' Run the divide-and-conquer closest-pair algorithm on the set of passed
+        points in a 2D plane. 
+    '''
 
     # presort by x and y coordinate
     pts_sortX = points[points[:,0].argsort()]
@@ -215,72 +222,6 @@ def ClosestPair(points):
     closest_dist, closest_pair = _ClosestPair(pts_sortX, pts_sortY, results, 1)
 
     return closest_dist, closest_pair, results
-
-##############################################
-
-if __name__ == "__main__":
-    # def _clean_pairs(points):
-    #     from collections import Counter
-
-    #     points = np.asarray([p for p in points if None not in p])
-
-    #     # prevent any duplicate x values with imperceptible jitter
-    #     dup_Xs = {x: 0 for x, count in Counter(list(points[:, 0])).items() if count > 1}
-    #     for i, x in enumerate(points[:, 0]):
-    #         if x in dup_Xs:
-    #             points[i, 0] += 1e-9 * dup_Xs[x]
-    #             dup_Xs[x] += 1
-
-    #     dup_Ys = {y: 0 for y, count in Counter(list(points[:, 1])).items() if count > 1}
-    #     for i, y in enumerate(points[:, 1]):
-    #         if y in dup_Ys:
-    #             points[i, 1] += 1e-9 * dup_Ys[y]
-    #             dup_Ys[y] += 1
-
-    #     return points
-
-
-    points1 = np.array(
-        [[0.6322580645161291, 7.662337662337663],
-         [1.6129032258064515, 6.987012987012987],
-         [1.432258064516129, 5.012987012987013],
-         [1.9225806451612906, 4.467532467532468],
-         [3.470967741935484, 4.467532467532468],
-         [7.341935483870968, 3.844155844155845],
-         [8.141935483870967, 2.51948051948052],
-         [9.380645161290323, 1.350649350649351],
-         [8.890322580645162, 6.103896103896105],
-         [6.154838709677419, 6.90909090909091],
-         [8.529032258064516, 7.116883116883118],
-         [6.903225806451612, 6.883116883116884],
-         [2.980645161290323, 6.25974025974026],
-         [5.199999999999999, 6.64935064935065],
-         [5.225806451612904, 9.428571428571429],
-         [3.341935483870968, 7.948051948051948],
-         [4.3741935483870975, 7.0649350649350655],
-         [4.348387096774193, 4.753246753246755],
-         [5.251612903225807, 2.9870129870129873],
-         [3.2903225806451615, 1.9740259740259742],
-         [5.019354838709678, 1.9740259740259742],
-         [5.638709677419355, 1.6363636363636367],
-         [6.154838709677419, 1.5844155844155847],
-         [5.974193548387097, 3.064935064935065],
-         [2.232258064516129, 1.116883116883117],
-         [1.1225806451612903, 2.12987012987013],
-         [0.6064516129032258, 3.818181818181819],
-         [1.5612903225806454, 3.636363636363637],
-         [2.722580645161291, 3.064935064935065],
-         [4.451612903225806, 0.9610389610389616],
-         [6.516129032258064, 4.753246753246755]])
-
-    points2 = np.array([[0,1], [2,1], [3,1], [5.5,1], [6,1], [7,1], [8,1], [10,1]])
-    # [0,1], [2,1],  [3,1], [5.5,1]   |   [6,1], [7,1],   [8,1], [10,1]
-    # [0,1], [2,1] | [3,1], [5.5,1]   |   [6,1], [7,1], | [8,1], [10,1]
-    # 
-    points = _clean_pairs(points1)
-    closest_dist, closest_pair, results = ClosestPair(points)
-    print(results)
-    
 
 
 
