@@ -3,8 +3,10 @@ Demo of the divide-and-conquer algorithm for finding the closest pair of points 
 
 ## Usage and Dependencies
 
+Python dependencies:
 - NumPy
 - Matplotlib
+- Python 3.* (tested with version 3.7)
 
 To run:
 ```bash
