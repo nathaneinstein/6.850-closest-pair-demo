@@ -111,11 +111,11 @@ def plot_results(points, results, fig, ax, pause_len=1):
         ax.set_ylim([0, 10])
         
         xmed = result['median']
-        xminL = result['left min x']
-        xmaxR = result['right max x']
-        closest_pairL = result['left closest pair']
+        xminL = result['L min x']
+        xmaxR = result['R max x']
+        closest_pairL = result['L closest pair']
         closest_pairC = result['center closest pair']
-        closest_pairR = result['right closest pair']
+        closest_pairR = result['R closest pair']
 
         ax.axvspan(xminL, xmed, alpha=0.05, color='red')
         ax.axvspan(xmed, xmaxR, alpha=0.05, color='blue')
@@ -166,9 +166,18 @@ def plot_results(points, results, fig, ax, pause_len=1):
 
 def _ClosestPair(pts_sortX, pts_sortY, results, level):
     ''' 
+    Helper function for recursive ClosestPair function
+    
+    Parameters:
+        pts_sortX:  points sorted by x-coordinate
+        pts_sortY:  points (same set as in pts_sortX) sorted by y-coordinate
+        results:    list of dictionaries storing the results at each level in 
+                    the recursion tree.
+        level:      current level in the recursion tree
+
     Return values:
-         (1) minimum distance among given points (infinity if <2 points)
-         (2) points array sorted by y coordinate
+        1. Minimum distance of all pairs of points
+        2. Coordinates of the closest pair of points
     '''
     
     # base case
@@ -176,14 +185,14 @@ def _ClosestPair(pts_sortX, pts_sortY, results, level):
         min_dist, closest_pair = pairwise_search(pts_sortX)
         return min_dist, closest_pair
     
-    # recursively search left and right half-planes about median
+    # split points about median x value and recursively search these subsets
     median, pts_sortX_L, pts_sortX_R, pts_sortY_L, pts_sortY_R \
         = split_medianX(pts_sortX, pts_sortY)
     
     delta_L, closest_pair_L = _ClosestPair(pts_sortX_L, pts_sortY_L, results, level+1)
     delta_R, closest_pair_R = _ClosestPair(pts_sortX_R, pts_sortY_R, results, level+1)
     
-    # identify closest pair in left and right subsets
+    # identify which of left- or right-subset candidate closest pairs is closer
     if delta_L < delta_R:
         delta = delta_L
         closest_pair = closest_pair_L
@@ -191,7 +200,7 @@ def _ClosestPair(pts_sortX, pts_sortY, results, level):
         delta = delta_R
         closest_pair = closest_pair_R
 
-    # get all points within delta units of the median
+    # get all points within delta-unit strip about the median
     _, pts_sortY_instrip = pts_within_deltaX(pts_sortX, pts_sortY, delta, median)
     
     # check if any pair of points spanning the median is closer than delta units
