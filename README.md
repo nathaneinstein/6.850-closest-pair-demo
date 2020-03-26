@@ -1,4 +1,4 @@
-## 6.850 Computational Geometry: Problem Set 1: *closest pair implementation*
+## **6.850 Computational Geometry**, Problem Set 1: *closest pair implementation*
 Demo of the divide-and-conquer algorithm for finding the closest pair of points in the Euclidean plane.
 
 ## Usage and Dependencies
@@ -8,7 +8,7 @@ Demo of the divide-and-conquer algorithm for finding the closest pair of points 
 
 To run:
 ```bash
-./python main.py
+python main.py
 ```
 
 ## Pseudocode
