@@ -88,23 +88,33 @@ def closest_pair_instrip(pts_sortY_instrip, max_dist):
     Ys = pts_sortY_instrip[:,1]
     closest_dist = max_dist
     closest_pair = None
+    pairs_checked = []
 
     # inner loop will run at most 5 times. This fact is key to demonstrating 
     # the algorithm runs in O(nlogn) rather than O(n^2)
     for i in range(len(pts_sortY_instrip)):
         j = i+1
         while (j < len(pts_sortY_instrip)) and (Ys[j] - Ys[i] < closest_dist):
-            d_ij = distance(pts_sortY_instrip[i], pts_sortY_instrip[j])
+            pt_i = pts_sortY_instrip[i]
+            pt_j = pts_sortY_instrip[j]
+            pairs_checked.append((pt_i, pt_j))
+            d_ij = distance(pt_i, pt_j)
             if d_ij < closest_dist:
                 closest_dist = d_ij
-                closest_pair = np.array([pts_sortY_instrip[i], 
-                                         pts_sortY_instrip[j]])
+                closest_pair = np.array([pt_i, pt_j])
             j += 1
 
-    return closest_pair
+    return closest_pair, pairs_checked
 
 
-def plot_results(points, results, fig, ax, pause_len=1):
+def plot_results(points, results, fig, ax, pause_len=2):
+
+    def refresh_plot(pause=pause_len):
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        plt.pause(pause)
+
+
     for result in results:
         ax.clear()
         ax.set_xlim([0, 10])
@@ -116,37 +126,59 @@ def plot_results(points, results, fig, ax, pause_len=1):
         closest_pairL = result['L closest pair']
         closest_pairC = result['center closest pair']
         closest_pairR = result['R closest pair']
+        pairs_checked = result['center pairs checked']
 
         ax.axvspan(xminL, xmed, alpha=0.05, color='red')
         ax.axvspan(xmed, xmaxR, alpha=0.05, color='blue')
-        ax.axvline(xmed, ls='--', lw=1)
+        ax.axvline(xmed, ls='--', lw=2)
         ax.scatter(x=points[:,0], y=points[:,1], facecolors="None", edgecolors='k', lw=1, s=30)
 
+        # draw closest pairs in left and right subsets
         pairs = {}
-        for i, (pair, c) in enumerate(zip([closest_pairL, closest_pairC, closest_pairR], ['r','g','b'])):
-            if pair is not None:    
-                x_vals = [pair[0][0], pair[1][0]]
-                y_vals = [pair[0][1], pair[1][1]]
-                pair_line = ax.plot(x_vals, y_vals, c=c, ls='-', lw=2)
-                pair_Lpt = ax.scatter(x=x_vals[0], y=y_vals[0], facecolors=c, alpha=0.7, edgecolors="None", s=30)
-                pair_Rpt = ax.scatter(x=x_vals[1], y=y_vals[1], facecolors=c, alpha=0.7, edgecolors="None", s=30)
+        for i, (pair, c) in enumerate(zip([closest_pairL, closest_pairR], ['r','b'])):
+            x_vals = [pair[0][0], pair[1][0]]
+            y_vals = [pair[0][1], pair[1][1]]
+            pair_line = ax.plot(x_vals, y_vals, c=c, ls=':', lw=1)
+            pair_Lpt = ax.scatter(x=x_vals[0], y=y_vals[0], facecolors=c, alpha=0.7, edgecolors="None", s=30)
+            pair_Rpt = ax.scatter(x=x_vals[1], y=y_vals[1], facecolors=c, alpha=0.7, edgecolors="None", s=30)
 
-                pair_dist = distance(pair[0], pair[1])
-                pairs[pair_dist] = [pair_line, pair_Lpt, pair_Rpt]
+            pair_dist = distance(pair[0], pair[1])
+            pairs[pair_dist] = [pair_line, pair_Lpt, pair_Rpt]
+        refresh_plot()
 
-        fig.canvas.draw()
-        fig.canvas.flush_events()
-        plt.pause(pause_len + 1)
-
-        # remove all but closest pair from plot
-        closest_pair = pairs.pop( min(pairs.keys()) )
+        # remove all but closest pair over left and right subsets
+        delta = min(pairs.keys())
+        closest_pair = pairs.pop(delta)
         for key, val in pairs.items():
             ax.lines.remove(val[0][0])
             val[1].remove()
             val[2].remove()
-        fig.canvas.draw()
-        fig.canvas.flush_events()
-        plt.pause(pause_len)
+        refresh_plot()
+
+        # show pair comparisons within 2*delta strip about median
+        ax.axvspan(xmed - delta, xmed + delta, alpha=0.1, color='green')
+        refresh_plot()
+        closest_pair_ctr = None
+        for pair in pairs_checked:
+            x_vals = [pair[0][0], pair[1][0]]
+            y_vals = [pair[0][1], pair[1][1]]
+            pair_Lpt = ax.scatter(x=x_vals[0], y=y_vals[0], facecolors="None", linewidths=2, edgecolors='k', s=30)
+            pair_Rpt = ax.scatter(x=x_vals[1], y=y_vals[1], facecolors="None", linewidths=2, edgecolors='k', s=30)
+            refresh_plot()
+            pair_Lpt.remove()
+            pair_Rpt.remove()
+            refresh_plot()
+
+        # if closest pair is in strip about median, show it
+        if closest_pairC is not None:
+            ax.lines.remove(closest_pair[0][0]); closest_pair[1].remove(); closest_pair[2].remove()
+            x_vals = [closest_pairC[0][0], closest_pairC[1][0]]
+            y_vals = [closest_pairC[0][1], closest_pairC[1][1]]
+            pair_line = ax.plot(x_vals, y_vals, c='g', ls=':', lw=1)
+            pair_Lpt = ax.scatter(x=x_vals[0], y=y_vals[0], facecolors='g', alpha=0.7, edgecolors="None", s=30)
+            pair_Rpt = ax.scatter(x=x_vals[1], y=y_vals[1], facecolors='g', alpha=0.7, edgecolors="None", s=30)
+            closest_pair = [pair_line, pair_Lpt, pair_Rpt]
+            refresh_plot()
 
     # display overall closest pair
     ax.clear()
@@ -156,9 +188,8 @@ def plot_results(points, results, fig, ax, pause_len=1):
     for pt in (closest_pair[1:]):
         pt.set_offset_position('data')
         x, y = pt.get_offsets()[0]
-        ax.scatter(x=x, y=y, facecolors='y', edgecolors="k", s=30, linewidths=2)
-    fig.canvas.draw()
-    fig.canvas.flush_events()
+        ax.scatter(x=x, y=y, facecolors='y', edgecolors="k", s=45, linewidths=2)
+    refresh_plot(0)
 
     plt.show(block=True)
 
@@ -182,8 +213,7 @@ def _ClosestPair(pts_sortX, pts_sortY, results, level):
     
     # base case
     if len(pts_sortX) <= 3:
-        min_dist, closest_pair = pairwise_search(pts_sortX)
-        return min_dist, closest_pair
+        return pairwise_search(pts_sortX)
     
     # split points about median x value and recursively search these subsets
     median, pts_sortX_L, pts_sortX_R, pts_sortY_L, pts_sortY_R \
@@ -204,7 +234,7 @@ def _ClosestPair(pts_sortX, pts_sortY, results, level):
     _, pts_sortY_instrip = pts_within_deltaX(pts_sortX, pts_sortY, delta, median)
     
     # check if any pair of points spanning the median is closer than delta units
-    closest_pair_C = closest_pair_instrip(pts_sortY_instrip, delta)
+    closest_pair_C, pairs_checked = closest_pair_instrip(pts_sortY_instrip, delta)
     if closest_pair_C is not None:
         closest_pair = closest_pair_C
         delta = distance(closest_pair_C[0], closest_pair_C[1])
@@ -213,7 +243,8 @@ def _ClosestPair(pts_sortX, pts_sortY, results, level):
         'L min x': pts_sortX_L[0][0], 'L max x': pts_sortX_L[-1][0], 
         'L closest pair': closest_pair_L, 'R min x': pts_sortX_R[0][0], 
         'R max x': pts_sortX_R[-1][0], 'R closest pair': closest_pair_R, 
-        'center closest pair': closest_pair_C})
+        'center closest pair': closest_pair_C, 
+        'center pairs checked': pairs_checked})
 
     return delta, closest_pair
     

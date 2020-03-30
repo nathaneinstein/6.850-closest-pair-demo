@@ -65,7 +65,8 @@ def _find_closest_pair(points, fig, ax):
     print("\nPoints entered:\n---------------\n", points)
     points = _clean_pairs(points)
     closest_dist, closest_pair, results = cp.ClosestPair(points)
-    print("\nClosest-pair results:\n---------------------\n", results)
+    with np.printoptions(precision=3):
+	    print("\nClosest-pair results:\n---------------------\n", results)
     cp.plot_results(points, results, fig, ax)
 
 run_alg_button = tkinter.Button(master=root, text="Find closest pair", 
